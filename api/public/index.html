@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- หน้า Login -->
+        <div id="login-page" class="page active">
+            <div class="card">
+                <h2>เข้าสู่ระบบ</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">อีเมล</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">รหัสผ่าน</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+                    <div class="message" id="login-message"></div>
+                </form>
+                <p class="link-text">
+                    ยังไม่มีบัญชี? <a href="#" onclick="showPage('register-page')">ลงทะเบียน</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- หน้า Register -->
+        <div id="register-page" class="page">
+            <div class="card">
+                <h2>ลงทะเบียน</h2>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-email">อีเมล *</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">รหัสผ่าน * (อย่างน้อย 6 ตัวอักษร)</label>
+                        <input type="password" id="register-password" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-name">ชื่อ</label>
+                        <input type="text" id="register-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-tel">เบอร์โทรศัพท์</label>
+                        <input type="tel" id="register-tel">
+                    </div>
+                    <button type="submit" class="btn btn-primary">ลงทะเบียน</button>
+                    <div class="message" id="register-message"></div>
+                </form>
+                <p class="link-text">
+                    มีบัญชีแล้ว? <a href="#" onclick="showPage('login-page')">เข้าสู่ระบบ</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- หน้า Profile (Protected) -->
+        <div id="profile-page" class="page">
+            <div class="card">
+                <h2>ข้อมูลผู้ใช้</h2>
+                <div id="profile-content">
+                    <div class="profile-info">
+                        <p><strong>อีเมล:</strong> <span id="user-email">-</span></p>
+                    </div>
+                    <div class="profile-info">
+                        <p><strong>Token:</strong></p>
+                        <textarea id="user-token" readonly rows="4"></textarea>
+                    </div>
+                    <button class="btn btn-danger" onclick="logout()">ออกจากระบบ</button>
+                    <div class="message" id="profile-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

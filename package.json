@@ -1,0 +1,30 @@
+{
+  "name": "nest-auth-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "api",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:frontend\"",
+    "dev:api": "npm run start:dev --workspace=api",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces",
+    "build:api": "npm run build --workspace=api",
+    "build:frontend": "npm run build --workspace=frontend",
+    "start": "concurrently \"npm run start:prod --workspace=api\" \"npm run start --workspace=frontend\"",
+    "start:api": "npm run start:prod --workspace=api",
+    "start:frontend": "npm run start --workspace=frontend",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "install:all": "npm install && npm install --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

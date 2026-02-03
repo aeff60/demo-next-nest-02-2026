@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: authdb
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - ldap-network
+
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: ldap-server
+    hostname: ldap
+    environment:
+      LDAP_ORGANISATION: "BorntoDev Co., Ltd."
+      LDAP_DOMAIN: "borntodev.com"
+      LDAP_ADMIN_PASSWORD: "admin123" 
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+    networks:
+      - ldap-network
+    restart: unless-stopped
+
+  ldap-admin:
+    image: osixia/phpldapadmin:latest
+    container_name: ldap-admin
+    hostname: ldap-admin
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: "ldap"
+      PHPLDAPADMIN_HTTPS: "false"
+      PHPLDAPADMIN_TRUST_PROXY_SSL: "true"
+    ports:
+      - "8080:80"
+    depends_on:
+      - ldap
+    networks:
+      - ldap-network
+    restart: unless-stopped
+
+networks:
+  ldap-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  ldap-data:
+  ldap-config:
