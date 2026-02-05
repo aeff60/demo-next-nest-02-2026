@@ -1,18 +1,25 @@
 services:
+  # ---- Database ----
   postgres:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: example
-      POSTGRES_DB: authdb
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-example}
+      POSTGRES_DB: ${POSTGRES_DB:-authdb}
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - ldap-network
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-root} -d ${POSTGRES_DB:-authdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # ---- LDAP ----
   ldap:
     image: osixia/openldap:1.5.0
     container_name: ldap-server
@@ -20,7 +27,7 @@ services:
     environment:
       LDAP_ORGANISATION: "BorntoDev Co., Ltd."
       LDAP_DOMAIN: "borntodev.com"
-      LDAP_ADMIN_PASSWORD: "admin123" 
+      LDAP_ADMIN_PASSWORD: "admin123"
     ports:
       - "389:389"
       - "636:636"
@@ -28,7 +35,7 @@ services:
       - ldap-data:/var/lib/ldap
       - ldap-config:/etc/ldap/slapd.d
     networks:
-      - ldap-network
+      - app-network
     restart: unless-stopped
 
   ldap-admin:
@@ -44,11 +51,62 @@ services:
     depends_on:
       - ldap
     networks:
-      - ldap-network
+      - app-network
     restart: unless-stopped
 
+  # ---- API (NestJS) ----
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${POSTGRES_USER:-root}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-example}
+      DATABASE_NAME: ${POSTGRES_DB:-authdb}
+      DATABASE_SYNC: ${DATABASE_SYNC:-false}
+      DATABASE_LOGGING: ${DATABASE_LOGGING:-false}
+      JWT_SECRET: ${JWT_SECRET:-SECRET_KEY_2025}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      LDAP_URL: ${LDAP_URL:-ldap://ldap:389}
+      LDAP_BIND_DN: ${LDAP_BIND_DN:-cn=admin,dc=borntodev,dc=com}
+      LDAP_BIND_PASSWORD: ${LDAP_BIND_PASSWORD:-admin123}
+      LDAP_SEARCH_BASE: ${LDAP_SEARCH_BASE:-dc=borntodev,dc=com}
+      LDAP_SEARCH_FILTER: ${LDAP_SEARCH_FILTER:-(uid={{username}})}
+      PORT: 4000
+    volumes:
+      - api-uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ldap:
+        condition: service_started
+    networks:
+      - app-network
+
+  # ---- Frontend (Next.js) ----
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - api
+    networks:
+      - app-network
+
 networks:
-  ldap-network:
+  app-network:
     driver: bridge
 
 volumes:
@@ -56,3 +114,4 @@ volumes:
     driver: local
   ldap-data:
   ldap-config:
+  api-uploads:
